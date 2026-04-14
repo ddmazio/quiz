@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Questionário de Marketing</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#080c18; --surface:#0f1525; --surface2:#16203a; --border:#1f2d50;
+    --gold:#c8a84b; --gold-light:#e8c96a; --cream:#f0ebe0; --cream-dim:#b8b0a0;
+    --green:#3db876; --red:#d95f5f; --blue:#4a7fd4; --purple:#8b6dd4; --orange:#e0874a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 10% 20%,#1a2550 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 90% 80%,#251a40 0%,transparent 60%);pointer-events:none;z-index:0}
+  .question-card{isolation:isolate}
+
+  /* INTRO */
+  #intro-screen{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center}
+  .intro-badge{font-size:.7rem;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);padding:.4em 1.2em;border-radius:2px;margin-bottom:2rem}
+  .intro-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;line-height:1.1;color:var(--cream);margin-bottom:.5rem;max-width:700px}
+  .intro-title em{color:var(--gold);font-style:italic}
+  .intro-subtitle{font-size:.9rem;color:var(--cream-dim);margin-top:.8rem;margin-bottom:2.5rem;letter-spacing:.05em}
+  .intro-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:480px;width:100%;margin-bottom:2.5rem}
+  .intro-stat{background:var(--surface);padding:1.2rem 1.5rem;text-align:left}
+  .intro-stat .val{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--gold);line-height:1}
+  .intro-stat .lbl{font-size:.72rem;color:var(--cream-dim);letter-spacing:.06em;text-transform:uppercase;margin-top:.3rem}
+  .intro-rules{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem 2rem;max-width:480px;width:100%;text-align:left;margin-bottom:2.5rem}
+  .intro-rules h3{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--gold);margin-bottom:1rem;letter-spacing:.05em}
+  .intro-rules ul{list-style:none;display:flex;flex-direction:column;gap:.55rem}
+  .intro-rules li{font-size:.82rem;color:var(--cream-dim);padding-left:1.2rem;position:relative;line-height:1.5}
+  .intro-rules li::before{content:'—';position:absolute;left:0;color:var(--gold);font-size:.7rem;top:.1em}
+  .intro-rules li strong{color:var(--cream)}
+  .btn-start{background:var(--gold);color:#080c18;border:none;padding:1rem 3rem;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:background .2s,transform .15s}
+  .btn-start:hover{background:var(--gold-light);transform:translateY(-1px)}
+
+  /* HEADER */
+  .quiz-header{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.8rem 1.5rem;display:flex;align-items:center;gap:1rem}
+  .quiz-title{font-family:'Playfair Display',serif;font-size:.85rem;color:var(--gold);white-space:nowrap;font-style:italic}
+  .progress-bar-wrap{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:2px;transition:width .3s ease;width:0%}
+  .timer-display{display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--cream);white-space:nowrap;background:var(--surface2);padding:.35rem .8rem;border-radius:4px;border:1px solid var(--border)}
+  .timer-display.warning{color:var(--orange);border-color:var(--orange)}
+  .timer-display.danger{color:var(--red);border-color:var(--red);animation:pulse-timer 1s infinite}
+  @keyframes pulse-timer{0%,100%{opacity:1}50%{opacity:.5}}
+  .q-counter{font-size:.75rem;color:var(--cream-dim);white-space:nowrap}
+
+  /* QUIZ BODY */
+  .quiz-body{display:flex;max-width:1100px;margin:0 auto;width:100%;padding:1.5rem 1rem;gap:1.5rem;align-items:flex-start;position:relative;z-index:1}
+  .question-panel{flex:1;min-width:0}
+  .question-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:2rem 2.2rem;animation:slideIn .25s ease;position:relative;z-index:1}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .q-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:1.2rem;flex-wrap:wrap}
+  .q-num{font-size:.7rem;font-weight:600;color:var(--cream-dim);letter-spacing:.1em;text-transform:uppercase}
+  .q-type-badge{font-size:.62rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:.2em .7em;border-radius:2px;border:1px solid}
+  .badge-tf{color:var(--blue);border-color:var(--blue);background:rgba(74,127,212,.08)}
+  .badge-fill{color:var(--purple);border-color:var(--purple);background:rgba(139,109,212,.08)}
+  .badge-mc{color:var(--gold);border-color:var(--gold);background:rgba(200,168,75,.08)}
+  .q-diff-badge{font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.2em .7em;border-radius:2px}
+  .diff-facil{color:var(--green);background:rgba(61,184,118,.1)}
+  .diff-medio{color:var(--orange);background:rgba(224,135,74,.1)}
+  .diff-dificil{color:var(--red);background:rgba(217,95,95,.1)}
+  .q-text{font-family:'Playfair Display',serif;font-size:1.1rem;line-height:1.65;color:var(--cream);margin-bottom:1.8rem}
+
+  /* TF */
+  .tf-options{display:flex;gap:.8rem;flex-wrap:wrap}
+  .tf-btn{flex:1;min-width:120px;padding:1rem 1.2rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--cream-dim);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;text-align:center}
+  .tf-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,.06)}
+  .tf-btn.selected-v{border-color:var(--green);color:var(--green);background:rgba(61,184,118,.1)}
+  .tf-btn.selected-f{border-color:var(--red);color:var(--red);background:rgba(217,95,95,.1)}
+  .tf-btn.selected-ns{border-color:var(--cream-dim);color:var(--cream-dim);background:rgba(184,176,160,.08)}
+  .tf-note{margin-top:.8rem;font-size:.72rem;color:var(--cream-dim);opacity:.7;font-style:italic}
+
+  /* FILL */
+  .fill-wrap{display:flex;flex-direction:column;gap:.6rem}
+  .fill-label{font-size:.72rem;color:var(--cream-dim);letter-spacing:.08em;text-transform:uppercase}
+  .fill-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.2rem;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;transition:border-color .15s;width:100%}
+  .fill-input:focus{border-color:var(--gold)}
+  .fill-input::placeholder{color:var(--cream-dim);opacity:.4}
+
+  /* MC */
+  .mc-options{display:flex;flex-direction:column;gap:.7rem}
+  .mc-option{display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.2rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s;text-align:left;width:100%;color:var(--cream-dim)}
+  .mc-option:hover{border-color:var(--gold);color:var(--cream);background:rgba(200,168,75,.04)}
+  .mc-option.selected{border-color:var(--gold);color:var(--cream);background:rgba(200,168,75,.1)}
+  .option-letter{flex-shrink:0;width:1.6rem;height:1.6rem;background:var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--cream-dim);transition:all .15s;margin-top:.05rem}
+  .mc-option.selected .option-letter{background:var(--gold);color:#080c18}
+  .option-text{font-size:.88rem;line-height:1.5;flex:1}
+
+  /* NAV */
+  .q-nav{display:flex;align-items:center;justify-content:space-between;margin-top:2rem;padding-top:1.2rem;border-top:1px solid var(--border);gap:.8rem}
+  .btn-nav{background:var(--surface2);border:1px solid var(--border);color:var(--cream-dim);padding:.7rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;border-radius:4px;transition:all .15s;letter-spacing:.05em}
+  .btn-nav:hover{border-color:var(--gold);color:var(--gold)}
+  .btn-nav:disabled{opacity:.3;cursor:not-allowed}
+  .btn-nav:disabled:hover{border-color:var(--border);color:var(--cream-dim)}
+  .btn-submit{background:var(--gold);border:none;color:#080c18;padding:.7rem 1.6rem;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;border-radius:4px;transition:all .15s;letter-spacing:.08em;text-transform:uppercase}
+  .btn-submit:hover{background:var(--gold-light)}
+
+  /* SIDEBAR */
+  .q-grid-panel{width:240px;flex-shrink:0;position:sticky;top:80px}
+  .grid-title{font-size:.68rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--cream-dim);margin-bottom:.8rem}
+  .q-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  .grid-dot{aspect-ratio:1;border-radius:3px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:.58rem;font-weight:600;color:var(--cream-dim);display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .grid-dot:hover{border-color:var(--gold);color:var(--gold)}
+  .grid-dot.active{border-color:var(--gold);background:var(--gold);color:#080c18}
+  .grid-dot.answered{border-color:var(--blue);background:rgba(74,127,212,.15);color:var(--blue)}
+  .grid-dot.active.answered{background:var(--gold);color:#080c18;border-color:var(--gold)}
+  .grid-legend{display:flex;flex-direction:column;gap:.45rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--border)}
+  .legend-item{display:flex;align-items:center;gap:.5rem;font-size:.68rem;color:var(--cream-dim)}
+  .legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+  .ld-active{background:var(--gold)}
+  .ld-answered{background:rgba(74,127,212,.4);border:1px solid var(--blue)}
+  .ld-empty{background:var(--surface2);border:1px solid var(--border)}
+  .answered-count{margin-top:1rem;font-size:.72rem;color:var(--cream-dim);text-align:center;padding:.6rem;background:var(--surface2);border-radius:4px;border:1px solid var(--border)}
+  .answered-count strong{color:var(--cream)}
+
+  /* RESULTS */
+  #results-screen{position:relative;z-index:1;min-height:100vh;padding:3rem 1.5rem;display:none;flex-direction:column;align-items:center}
+  .results-badge{font-size:.68rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;text-align:center}
+  .results-title{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;color:var(--cream);margin-bottom:2.5rem;text-align:center}
+  .score-ring-wrap{display:flex;justify-content:center;gap:2.5rem;margin-bottom:2.5rem;flex-wrap:wrap}
+  .score-ring{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+  .ring-svg{transform:rotate(-90deg)}
+  .ring-bg{fill:none;stroke:var(--border);stroke-width:6}
+  .ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)}
+  .ring-label{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--cream);text-align:center}
+  .ring-sub{font-size:.7rem;color:var(--cream-dim);letter-spacing:.08em;text-transform:uppercase;text-align:center}
+  .stats-row{display:flex;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:600px;width:100%;margin:0 auto 2rem}
+  .stat-cell{flex:1;background:var(--surface);padding:1.2rem;text-align:center}
+  .stat-cell .n{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;line-height:1}
+  .stat-cell .t{font-size:.68rem;color:var(--cream-dim);letter-spacing:.08em;text-transform:uppercase;margin-top:.3rem}
+  .n-correct{color:var(--green)}
+  .n-wrong{color:var(--red)}
+  .final-note{text-align:center;max-width:520px;margin:0 auto 2.5rem;font-size:.82rem;color:var(--cream-dim);line-height:1.7;padding:1.4rem 1.6rem;background:var(--surface);border:1px solid var(--border);border-radius:6px}
+  .big-score{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--gold);display:block;margin-bottom:.3rem}
+
+  /* TOPICS */
+  .topics-section{max-width:720px;width:100%;margin:0 auto 2.5rem}
+  .section-title{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+  .section-title.orange{color:var(--orange)}
+  .section-title.gold{color:var(--gold)}
+  .topic-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:5px;padding:1rem 1.2rem;margin-bottom:.6rem}
+  .topic-name{font-size:.85rem;font-weight:600;color:var(--cream);margin-bottom:.25rem}
+  .topic-detail{font-size:.75rem;color:var(--cream-dim);line-height:1.5}
+  .topic-bar-wrap{height:4px;background:var(--border);border-radius:2px;margin-top:.6rem;overflow:hidden}
+  .topic-bar{height:100%;border-radius:2px}
+  .no-weak{font-size:.85rem;color:var(--green);padding:1rem;text-align:center;background:rgba(61,184,118,.07);border:1px solid rgba(61,184,118,.2);border-radius:5px}
+
+  /* BREAKDOWN */
+  .results-breakdown{max-width:720px;width:100%;margin:0 auto}
+  .breakdown-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:2.5rem}
+  .breakdown-item{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:.9rem 1rem;font-size:.8rem}
+  .breakdown-item.res-correct{border-left:3px solid var(--green)}
+  .breakdown-item.res-wrong{border-left:3px solid var(--red)}
+  .breakdown-item.res-skip{border-left:3px solid var(--border);opacity:.7}
+  .bi-top{display:grid;grid-template-columns:2rem 1fr auto;align-items:start;gap:.8rem}
+  .bi-num{font-weight:700;color:var(--cream-dim);font-size:.72rem;padding-top:.1rem}
+  .bi-q{color:var(--cream-dim);line-height:1.5}
+  .bi-q strong{color:var(--cream);display:block;font-size:.82rem;margin-bottom:.25rem}
+  .bi-result{text-align:right;white-space:nowrap}
+  .pts{font-family:'Playfair Display',serif;font-size:.9rem;font-weight:700}
+  .pts-pos{color:var(--green)}
+  .pts-neg{color:var(--red)}
+  .pts-zero{color:var(--cream-dim)}
+  .user-ans-correct{font-size:.73rem;color:var(--green)}
+  .user-ans-wrong{font-size:.73rem;color:var(--red)}
+  .correct-ans-show{font-size:.73rem;color:var(--green)}
+  .skip-label{font-size:.73rem;color:var(--cream-dim)}
+
+  /* TF JUSTIFICATION */
+  .tf-just{margin-top:.8rem;padding:.75rem 1rem;background:rgba(74,127,212,.07);border:1px solid rgba(74,127,212,.2);border-radius:4px;font-size:.76rem;color:var(--cream-dim);line-height:1.6;display:flex;gap:.6rem;align-items:flex-start}
+  .tf-just .icon{color:var(--blue);flex-shrink:0;margin-top:.05rem;font-size:.8rem}
+  .tf-just em{color:var(--cream);font-style:normal;font-weight:500}
+
+  .btn-retry{display:block;margin:2rem auto 0;background:transparent;border:1px solid var(--gold);color:var(--gold);padding:.8rem 2rem;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;border-radius:4px;letter-spacing:.1em;text-transform:uppercase;transition:all .15s}
+  .btn-retry:hover{background:var(--gold);color:#080c18}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:2rem 2.5rem;text-align:center;max-width:380px;width:90%}
+  .modal-box h3{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--cream);margin-bottom:.7rem}
+  .modal-box p{font-size:.83rem;color:var(--cream-dim);line-height:1.6;margin-bottom:1.5rem}
+  .modal-btns{display:flex;gap:.8rem;justify-content:center}
+  .modal-btn{padding:.7rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;border-radius:4px;transition:all .15s;letter-spacing:.06em}
+  .modal-btn-confirm{background:var(--gold);border:none;color:#080c18}
+  .modal-btn-confirm:hover{background:var(--gold-light)}
+  .modal-btn-cancel{background:transparent;border:1px solid var(--border);color:var(--cream-dim)}
+  .modal-btn-cancel:hover{border-color:var(--cream-dim);color:var(--cream)}
+
+  @media(max-width:700px){
+    .quiz-body{flex-direction:column}
+    .q-grid-panel{width:100%;position:static}
+    .q-grid{grid-template-columns:repeat(10,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro-screen">
+  <div class="intro-badge">Avaliação de Marketing</div>
+  <h1 class="intro-title">Questionário de <em>Marketing</em></h1>
+  <p class="intro-subtitle">Capítulos 1 e 2 · Gestão de Marketing · Segmentação e Posicionamento</p>
+  <div class="intro-grid">
+    <div class="intro-stat"><div class="val">50</div><div class="lbl">Perguntas</div></div>
+    <div class="intro-stat"><div class="val">100</div><div class="lbl">Pontos totais</div></div>
+    <div class="intro-stat"><div class="val">+2</div><div class="lbl">Por resposta certa</div></div>
+    <div class="intro-stat"><div class="val">−1</div><div class="lbl">Por resposta errada</div></div>
+  </div>
+  <div class="intro-rules">
+    <h3>Instruções</h3>
+    <ul>
+      <li><strong>Verdadeiro/Falso</strong> — escolhe V, F ou "Não sei" (0 pt). Errar = −1. As justificações aparecem no resultado.</li>
+      <li><strong>Completar</strong> — escreve a palavra/expressão em falta. Em branco = 0. Errar = −1.</li>
+      <li><strong>Escolha múltipla</strong> — seleciona uma opção. Não responder = 0. Errar = −1.</li>
+      <li>Tempo máximo: <strong>25 minutos</strong>. A prova termina automaticamente.</li>
+      <li>A nota é calculada em <strong>100 pt</strong> e convertida para <strong>40% de 20 valores</strong>.</li>
+      <li>Cada "Tentar novamente" apresenta as perguntas em <strong>ordem aleatória diferente</strong>.</li>
+    </ul>
+  </div>
+  <button class="btn-start" onclick="startQuiz()">Começar a prova →</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" style="display:none;flex-direction:column;">
+  <div class="quiz-header">
+    <span class="quiz-title">Marketing</span>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <span class="q-counter" id="q-counter">1 / 50</span>
+    <div class="timer-display" id="timer-display">⏱ 25:00</div>
+  </div>
+  <div class="quiz-body">
+    <div class="question-panel">
+      <div class="question-card" id="question-card"></div>
+    </div>
+    <div class="q-grid-panel">
+      <div class="grid-title">Navegação</div>
+      <div class="q-grid" id="q-grid"></div>
+      <div class="grid-legend">
+        <div class="legend-item"><div class="legend-dot ld-active"></div>Atual</div>
+        <div class="legend-item"><div class="legend-dot ld-answered"></div>Respondida</div>
+        <div class="legend-item"><div class="legend-dot ld-empty"></div>Por responder</div>
+      </div>
+      <div class="answered-count" id="answered-count"><strong>0</strong> de 50 respondidas</div>
+      <button class="btn-submit" style="width:100%;margin-top:1rem;" onclick="confirmSubmit()">Entregar prova</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results-screen">
+  <div class="results-badge">Resultado Final</div>
+  <h2 class="results-title">Questionário de Marketing</h2>
+  <div class="score-ring-wrap" id="score-rings"></div>
+  <div class="stats-row" id="stats-row"></div>
+  <div class="final-note" id="final-note"></div>
+  <div class="topics-section" id="topics-section"></div>
+  <div class="results-breakdown">
+    <div class="section-title gold">📋 Detalhe por pergunta</div>
+    <div class="breakdown-list" id="breakdown-list"></div>
+  </div>
+  <button class="btn-retry" onclick="resetQuiz()">↺ Tentar novamente (ordem diferente)</button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <h3>Entregar prova?</h3>
+    <p id="modal-msg"></p>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-btn modal-btn-confirm" onclick="submitQuiz()">Entregar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   QUESTION BANK — 50 perguntas completas
+══════════════════════════════════════════════════════════ */
+const BANK = [
+  // ── VERDADEIRO / FALSO (15) ──
+  {id:1,type:'tf',difficulty:'facil',topic:'Definição e Natureza do Marketing',
+   question:'O marketing cria necessidades nos consumidores.',answer:'F',
+   justification:'As necessidades são intrínsecas ao ser humano — o marketing <em>identifica necessidades latentes</em> já existentes e converte-as em procura efetiva. Não pode criar o que já existe no indivíduo.'},
+  {id:2,type:'tf',difficulty:'facil',topic:'Definição e Natureza do Marketing',
+   question:'Para que exista marketing, a oferta tem de ser superior à procura, gerando competição entre empresas.',answer:'V',
+   justification:'O marketing só existe onde há <em>liberdade de escolha e concorrência</em>. Quando a oferta supera a procura, os consumidores têm alternativas e as empresas precisam de se distinguir — é aí que o marketing é necessário.'},
+  {id:3,type:'tf',difficulty:'medio',topic:'Definição e Natureza do Marketing',
+   question:'O marketing só existe em países democráticos com economia de mercado.',answer:'V',
+   justification:'O marketing pressupõe <em>liberdade de escolha, alternativas de oferta e acesso à informação</em> — condições exclusivas de democracias com economia de mercado livre. Não existe em economias planificadas ou autoritárias.'},
+  {id:4,type:'tf',difficulty:'medio',topic:'Valor, Satisfação e Fidelização',
+   question:'A satisfação do consumidor implica automaticamente fidelização à marca.',answer:'F',
+   justification:'Satisfação é <em>condição necessária mas não suficiente</em> para lealdade. A lealdade pode depender de inércia, laços sociais ou ausência de alternativas — e pode existir lealdade sem satisfação (por hábito ou conveniência).'},
+  {id:5,type:'tf',difficulty:'medio',topic:'Evolução Histórica e Marketing Mix',
+   question:'Os 4 Ps do marketing mix foram propostos por McCarthy em 1960, com base no framework de Neil Borden.',answer:'V',
+   justification:'McCarthy formalizou os <em>4 Ps (Product, Price, Place, Promotion)</em> em 1960, sistematizando o Marketing Mix de Neil Borden (1953). Em 1964 substituiu "consumer" por "customers", introduzindo o fator relacional.'},
+  {id:6,type:'tf',difficulty:'dificil',topic:'Mercado: Estrutura e Concorrência',
+   question:'Num mercado oligopolista, combinar preços com os concorrentes é uma prática permitida e comum.',answer:'F',
+   justification:'Combinar preços entre concorrentes é <em>proibido por lei</em> e configura cartel. Embora num oligopólio os agentes possam ser tentados a fazê-lo, é uma prática ilegal — os apontamentos referem explicitamente este ponto.'},
+  {id:7,type:'tf',difficulty:'facil',topic:'Definição e Natureza do Marketing',
+   question:'Publicidade e marketing são conceitos sinónimos — um é a extensão natural do outro.',answer:'F',
+   justification:'A publicidade é apenas <em>um componente da comunicação</em>, que por sua vez é apenas um dos 4 Ps. O marketing inclui ainda produto, preço, distribuição, investigação de mercado, PR, influencers e promoções.'},
+  {id:8,type:'tf',difficulty:'medio',topic:'Necessidades, Desejos e Procuras',
+   question:'Os desejos, tal como as necessidades, são universais, hierárquicos e inerentes ao ser humano.',answer:'F',
+   justification:'As necessidades são universais e hierárquicas (Maslow). Os desejos são <em>ilimitados mas não universais</em> — influenciados por fatores culturais, sociais e individuais, variando de pessoa para pessoa.'},
+  {id:9,type:'tf',difficulty:'medio',topic:'Necessidades, Desejos e Procuras',
+   question:'A procura latente ocorre quando existe um desejo que não é satisfeito por nenhuma oferta existente no mercado.',answer:'V',
+   justification:'Procura latente é a <em>base dos produtos inovadores</em>: existe um desejo real nos consumidores, mas o mercado ainda não encontrou forma de o satisfazer. É uma oportunidade de negócio por explorar.'},
+  {id:10,type:'tf',difficulty:'dificil',topic:'Níveis do Produto',
+   question:'O "augmented product" (produto aumentado) refere-se ao benefício fundamental que o consumidor realmente procura.',answer:'F',
+   justification:'O benefício fundamental é o <em>core benefit (nível 1)</em>. O "augmented product" é o <em>nível 4</em> — atributos que excedem as expectativas e diferenciam a oferta (ex: estágios e conferências no ensino superior).'},
+  {id:11,type:'tf',difficulty:'medio',topic:'Branding e Qualidade',
+   question:'Uma marca pode perdurar indefinidamente, independentemente da vida útil mais curta ou longa dos seus produtos.',answer:'V',
+   justification:'Uma marca é uma <em>entidade independente do produto</em>. Pode ser registada, protegida por lei e sobreviver indefinidamente mesmo que os produtos evoluam, sejam descontinuados ou substituídos.'},
+  {id:12,type:'tf',difficulty:'dificil',topic:'Valor, Satisfação e Fidelização',
+   question:'O foco exclusivo na eficiência de curto prazo pode comprometer o brand equity e a satisfação a longo prazo.',answer:'V',
+   justification:'Promoções de preço geram retorno imediato mas <em>habituam o consumidor a comprar apenas em promoção</em>, erodindo a margem e o brand equity. A eficiência de curto prazo sacrifica a eficácia estratégica de longo prazo.'},
+  {id:13,type:'tf',difficulty:'medio',topic:'Posicionamento',
+   question:'Os Points-of-Parity (PoP) são atributos exclusivos da marca, não encontrados nos concorrentes.',answer:'F',
+   justification:'Os PoP são <em>associações partilhadas com a concorrência</em>, necessárias para a marca ser considerada na categoria. São os <em>Points-of-Difference (PoD)</em> que representam atributos exclusivos e a razão de escolha.'},
+  {id:14,type:'tf',difficulty:'facil',topic:'Definição e Natureza do Marketing',
+   question:'O marketing é apenas aplicável a empresas com fins lucrativos, não a organizações sem fins lucrativos.',answer:'F',
+   justification:'O marketing é essencial para <em>qualquer organização que necessite criar, comunicar e entregar valor</em> — hospitais, universidades, ONGs, partidos políticos. "Everybody is in marketing."'},
+  {id:15,type:'tf',difficulty:'dificil',topic:'Segmentação de Mercado',
+   question:'No marketing segmentado, a estratégia diferenciada implica atuar num único segmento de mercado selecionado.',answer:'F',
+   justification:'A <em>estratégia concentrada</em> foca num único segmento (ex: Rolls-Royce). A <em>estratégia diferenciada</em> atua em vários segmentos com políticas de marketing distintas para cada um (ex: Renault).'},
+
+  // ── COMPLETAR (10) ──
+  {id:16,type:'fill',difficulty:'facil',topic:'Valor, Satisfação e Fidelização',
+   question:'A fórmula do Valor em marketing é: Valor = Benefícios / _______.',
+   answer:['custos','custo']},
+  {id:17,type:'fill',difficulty:'medio',topic:'Necessidades, Desejos e Procuras',
+   question:'O modelo de hierarquia de necessidades, com cinco níveis das fisiológicas até à autorrealização, foi proposto por _______.',
+   answer:['maslow']},
+  {id:18,type:'fill',difficulty:'facil',topic:'Evolução Histórica e Marketing Mix',
+   question:'Os 4 Ps tradicionais do marketing mix são Product, Price, Place e _______.',
+   answer:['promotion','promoção','comunicação']},
+  {id:19,type:'fill',difficulty:'medio',topic:'Valor, Satisfação e Fidelização',
+   question:'A satisfação resulta de comparar a performance percebida com as _______ previamente estabelecidas.',
+   answer:['expectativas','expectativa']},
+  {id:20,type:'fill',difficulty:'dificil',topic:'Necessidades, Desejos e Procuras',
+   question:'Quando a procura excede claramente a capacidade produtiva de uma empresa, a estratégia indicada é o _______.',
+   answer:['demarketing']},
+  {id:21,type:'fill',difficulty:'medio',topic:'Análise SWOT',
+   question:'A análise _______ avalia internamente as forças e fraquezas, e externamente as oportunidades e ameaças do mercado.',
+   answer:['swot','tofa']},
+  {id:22,type:'fill',difficulty:'dificil',topic:'Mercado: Estrutura e Concorrência',
+   question:'O _______ é o valor potencial do conjunto de todas as transações com um consumidor completamente fiel ao longo da sua vida.',
+   answer:['lifetime value','ltv']},
+  {id:23,type:'fill',difficulty:'medio',topic:'Segmentação de Mercado',
+   question:'Na segmentação de mercado, a estratégia da Rolls-Royce de atuar num único segmento muito específico denomina-se estratégia _______.',
+   answer:['concentrada']},
+  {id:24,type:'fill',difficulty:'dificil',topic:'Mercado: Estrutura e Concorrência',
+   question:'Na fórmula Vendas = C × QP, o C representa o número de compradores e o QP representa a _______ média comprada.',
+   answer:['quantidade','quantidade media','quantidade média']},
+  {id:25,type:'fill',difficulty:'facil',topic:'Evolução Histórica e Marketing Mix',
+   question:'Os 3 Ps adicionais do marketing de serviços (anos 90) são People, Process e Physical _______.',
+   answer:['evidence','evidência','evidencia']},
+
+  // ── ESCOLHA MÚLTIPLA (25) ──
+  {id:26,type:'mc',difficulty:'facil',topic:'Mercado: Estrutura e Concorrência',
+   question:'Qual das seguintes é um exemplo de mercado fragmentado?',
+   options:{a:'Detergentes, dominados por poucas marcas com quotas de mercado elevadas',b:'Analgésicos, com muitas marcas e quotas individualmente muito pequenas',c:'Energia elétrica, com um único fornecedor dominante no mercado nacional',d:'Cerveja, com elevados custos de distribuição e comunicação associados'},answer:'b'},
+  {id:27,type:'mc',difficulty:'medio',topic:'Mercado: Estrutura e Concorrência',
+   question:'Qual das seguintes situações exemplifica concorrência inter-segmentos para a Pepsi?',
+   options:{a:'A Coca-Cola clássica e outras marcas de cola com posicionamento similar',b:'Refrigerantes não-diet como sumos de fruta e bebidas energéticas variadas',c:'Todas as bebidas do mercado, incluindo cafés, chás e águas minerais',d:'Apenas marcas de cola com posicionamento premium e preço mais elevado'},answer:'b'},
+  {id:28,type:'mc',difficulty:'facil',topic:'Necessidades, Desejos e Procuras',
+   question:'Qual das seguintes é um exemplo de procura negativa?',
+   options:{a:'Museus com maior afluência ao fim de semana do que em dias úteis',b:'Pessoas que evitam ativamente a vacinação e recusam ser vacinadas',c:'Um produto inovador sem ainda nenhuma oferta equivalente no mercado',d:'Um mercado em que a oferta e a procura estão em perfeito equilíbrio'},answer:'b'},
+  {id:29,type:'mc',difficulty:'medio',topic:'Níveis do Produto',
+   question:'Qual das seguintes situações é exemplo de "augmented product" no ensino superior?',
+   options:{a:'A licenciatura como título académico formalmente reconhecido e válido',b:'A empregabilidade e o futuro profissional do estudante já formado',c:'Os estágios, workshops e ligação preferencial a empresas parceiras',d:'As aulas curriculares e os programas de intercâmbio como o Erasmus'},answer:'c'},
+  {id:30,type:'mc',difficulty:'facil',topic:'Tipos e Classificação de Produtos',
+   question:'Qual das seguintes é um exemplo de produto de especialidade (specialty product)?',
+   options:{a:'Jornais, detergente e guarda-chuva de uso frequente e preço baixo',b:'Roupa de designer, carros desportivos e produtos de nicho únicos',c:'Seguros de vida e serviços funerários com pouca notoriedade geral',d:'Roupa convencional, bilhetes de avião e telemóveis de gama média'},answer:'b'},
+  {id:31,type:'mc',difficulty:'medio',topic:'Mercado: Estrutura e Concorrência',
+   question:'Qual das seguintes situações ilustra um mercado condicionado?',
+   options:{a:'A redução das tarifas aéreas provoca um aumento do número de viagens',b:'A venda de boxes de TV depende diretamente da existência de televisões',c:'O surgimento de produtos substitutos acelera o declínio de um mercado',d:'O aumento do preço dos eletrodomésticos provoca redução do consumo'},answer:'b'},
+  {id:32,type:'mc',difficulty:'medio',topic:'Posicionamento',
+   question:'Qual das seguintes é um exemplo de posicionamento comparativo?',
+   options:{a:'Volvo posiciona-se pela segurança como atributo central da sua marca',b:'Rolex posiciona-se como uma joia de luxo e não como um simples relógio',c:'Avis declara "We are number two. We try harder." em relação à Hertz',d:'Jeep enfatiza a condução off-road como experiência de marca distintiva'},answer:'c'},
+  {id:33,type:'mc',difficulty:'dificil',topic:'Valor, Satisfação e Fidelização',
+   question:'Qual das seguintes propostas de valor corresponde à proposta "more for less"?',
+   options:{a:'Oferecer o mesmo produto a um preço mais baixo do que o concorrente',b:'Oferecer mais benefícios pelo exato mesmo preço que a concorrência',c:'Oferecer melhor produto a preço mais baixo do que qualquer concorrente',d:'Oferecer versão simplificada do produto a um custo bastante reduzido'},answer:'c'},
+  {id:34,type:'mc',difficulty:'medio',topic:'Necessidades, Desejos e Procuras',
+   question:'Qual das seguintes é um exemplo de necessidade simbólica?',
+   options:{a:'Usar uma máquina de lavar para resolver um problema doméstico prático',b:'Frequentar restaurantes para desfrutar de prazer sensorial e estético',c:'Comprar joalharia de prestígio para autoexpressão e pertença ao grupo',d:'Contratar um seguro para proteção contra os riscos do quotidiano'},answer:'c'},
+  {id:35,type:'mc',difficulty:'dificil',topic:'Necessidades, Desejos e Procuras',
+   question:'Qual das seguintes situações exemplifica "procura irregular"?',
+   options:{a:'Vacinas que as pessoas evitam ativamente por receio ou desconfiança',b:'Museus com muito mais visitantes ao fim de semana do que em dias úteis',c:'Um produto inovador sem ainda nenhuma oferta equivalente no mercado',d:'Um mercado onde a procura excede claramente a capacidade produtiva'},answer:'b'},
+  {id:36,type:'mc',difficulty:'facil',topic:'Definição e Natureza do Marketing',
+   question:'Segundo a definição da AMA de 2017, o marketing é definido como:',
+   options:{a:'Exclusivamente a publicidade e a promoção comercial de produtos físicos',b:'A atividade de criar, comunicar, entregar e trocar ofertas com valor',c:'O departamento organizacional responsável pela gestão das vendas diretas',d:'A gestão da produção e da distribuição física eficiente de bens e serviços'},answer:'b'},
+  {id:37,type:'mc',difficulty:'facil',topic:'Necessidades, Desejos e Procuras',
+   question:'Qual é o nível base (nível 1) da Hierarquia de Necessidades de Maslow?',
+   options:{a:'Necessidades de segurança, proteção e estabilidade na vida pessoal',b:'Necessidades de estima, reconhecimento e estatuto social conquistado',c:'Necessidades fisiológicas como alimentação, bebida, abrigo e descanso',d:'Necessidades de autorrealização e desenvolvimento pleno do potencial'},answer:'c'},
+  {id:38,type:'mc',difficulty:'medio',topic:'Necessidades, Desejos e Procuras',
+   question:'O que distingue fundamentalmente "procura" de "desejo" em marketing?',
+   options:{a:'A procura é universal enquanto o desejo é culturalmente variável e local',b:'A procura é um desejo sustentado por vontade e capacidade de compra',c:'O desejo é mais racional e a procura resulta de motivação emocional',d:'A procura existe independentemente do marketing e da concorrência'},answer:'b'},
+  {id:39,type:'mc',difficulty:'medio',topic:'Branding e Qualidade',
+   question:'Qual das seguintes afirmações sobre branding é correta?',
+   options:{a:'Uma marca não pode ser registada nem juridicamente protegida por lei',b:'As marcas têm sempre duração limitada pela vida útil do produto físico',c:'As marcas conferem significado e representam uma promessa de qualidade',d:'O branding serve apenas para diferenciar produtos físicos concorrentes'},answer:'c'},
+  {id:40,type:'mc',difficulty:'medio',topic:'Definição e Natureza do Marketing',
+   question:'Qual é o principal objetivo do marketing social?',
+   options:{a:'Maximizar o retorno sobre o investimento e os lucros a longo prazo',b:'Melhorar o bem-estar e a saúde das pessoas através de comportamentos',c:'Angariar fundos, atrair voluntários e parcerias estratégicas para causas',d:'Criar valor para os stakeholders e assegurar a sustentabilidade financeira'},answer:'b'},
+  {id:41,type:'mc',difficulty:'dificil',topic:'Mercado: Estrutura e Concorrência',
+   question:'Qual das seguintes é uma característica de mercados altamente estruturados?',
+   options:{a:'Barreiras de entrada reduzidas e grande número de pequenos concorrentes',b:'Elevados custos de distribuição e comunicação como barreiras de entrada',c:'Ausência de marcas com quotas dominantes e mercado completamente disperso',d:'Facilidade de acesso para novos concorrentes com recursos financeiros baixos'},answer:'b'},
+  {id:42,type:'mc',difficulty:'dificil',topic:'Níveis do Produto',
+   question:'Segundo o modelo dos 5 níveis do produto, o "core benefit" do ensino superior é:',
+   options:{a:'A licenciatura como título académico formalmente reconhecido e registado',b:'O acesso a programas de intercâmbio internacionais como o Erasmus',c:'A empregabilidade e o desenvolvimento do futuro profissional do estudante',d:'As conferências, workshops, estágios e ligação preferencial a empresas'},answer:'c'},
+  {id:43,type:'mc',difficulty:'medio',topic:'Branding e Qualidade',
+   question:'Qual das seguintes NÃO é uma das 8 dimensões de Quality Level do produto?',
+   options:{a:'Fiabilidade (reliability) e durabilidade esperada do produto em utilização',b:'Características estéticas e qualidade percebida através da imagem de marca',c:'Preço de mercado praticado e rentabilidade financeira do produto vendido',d:'Performance nas características operacionais e features adicionais do produto'},answer:'c'},
+  {id:44,type:'mc',difficulty:'dificil',topic:'Evolução Histórica e Marketing Mix',
+   question:'O que caracteriza a "ótica de marketing" na evolução histórica do marketing?',
+   options:{a:'Otimização da eficiência produtiva e organização científica do trabalho',b:'Gestão das marcas e foco nas vendas em períodos de crise económica',c:'Centralidade do cliente nas decisões, que passa a "comandar" a organização',d:'Marketing relacional one-to-one com recurso ao e-commerce e às tecnologias'},answer:'c'},
+  {id:45,type:'mc',difficulty:'medio',topic:'Segmentação de Mercado',
+   question:'Qual das seguintes abordagens de segmentação é considerada a mais equilibrada e comum?',
+   options:{a:'Marketing de massas, por gerar economias de escala consideráveis para todos',b:'Marketing individualizado, por maior precisão e personalização total possível',c:'Marketing segmentado, por representar equilíbrio entre custo e eficácia real',d:'Marketing de nicho, por reduzir consideravelmente os custos de comunicação'},answer:'c'},
+  {id:46,type:'mc',difficulty:'dificil',topic:'Posicionamento',
+   question:'O que são Points-of-Parity (PoP) no âmbito do posicionamento de uma marca?',
+   options:{a:'Atributos exclusivos que diferenciam a marca de todos os seus concorrentes',b:'Associações partilhadas com a concorrência que legitimam a entrada na categoria',c:'Características únicas que justificam uma estratégia de nicho muito específica',d:'Indicadores financeiros que medem o retorno do investimento em comunicação'},answer:'b'},
+  {id:47,type:'mc',difficulty:'medio',topic:'Definição e Natureza do Marketing',
+   question:'Qual dos seguintes fatores contribuiu para a crescente soberania do consumidor?',
+   options:{a:'A redução da oferta disponível no mercado global e a maior escassez de bens',b:'A diminuição do nível de instrução e da educação dos consumidores atuais',c:'O aumento da informação disponível e da exigência dos consumidores modernos',d:'A concentração do mercado num número reduzido de grandes produtores globais'},answer:'c'},
+  {id:48,type:'mc',difficulty:'dificil',topic:'Posicionamento',
+   question:'Qual das seguintes estratégias genéricas de posicionamento é prerrogativa de apenas um concorrente por categoria?',
+   options:{a:'Diferenciação pela máxima utilidade oferecida ao público-alvo do mercado geral',b:'Nicho num segmento específico com uma competência singular e muito especializada',c:'Liderança pelo custo, sendo o concorrente mais barato dentro da categoria',d:'Posicionamento comparativo em relação ao líder estabelecido no mercado atual'},answer:'c'},
+  {id:49,type:'mc',difficulty:'medio',topic:'Valor, Satisfação e Fidelização',
+   question:'Qual é a diferença correta entre eficácia e eficiência em marketing?',
+   options:{a:'A eficácia foca nos recursos utilizados; a eficiência foca nos resultados pretendidos',b:'A eficácia é atingir os resultados; a eficiência é minimizar os recursos utilizados',c:'A eficiência é sempre mais importante do que a eficácia no contexto de longo prazo',d:'Eficácia e eficiência são conceitos essencialmente equivalentes com igual significado'},answer:'b'},
+  {id:50,type:'mc',difficulty:'dificil',topic:'Ciclo de Vida do Produto',
+   question:'Qual das seguintes afirmações sobre o ciclo de vida do produto é correta?',
+   options:{a:'O ciclo de vida do produto e do mercado são sempre coincidentes no tempo',b:'O objetivo é que a fase de declínio seja a mais longa possível no mercado',c:'Podem existir produtos inovadores em mercados já maduros e completamente saturados',d:'Os mercados evoluem sempre de forma linear e perfeitamente previsível ao longo do tempo'},answer:'c'}
+];
+
+/* ══════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════ */
+let active = [];          // shuffled questions for current session
+let currentQ = 0;
+let answers = new Array(50).fill(null);
+let timerInterval = null;
+let secondsLeft = 25 * 60;
+
+/* ══════════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════════ */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TIMER
+══════════════════════════════════════════════════════════ */
+function startTimer() {
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+    const el = document.getElementById('timer-display');
+    el.textContent = `⏱ ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.className = 'timer-display';
+    if (secondsLeft <= 300) el.classList.add('warning');
+    if (secondsLeft <= 60)  el.classList.add('danger');
+    if (secondsLeft <= 0)   { clearInterval(timerInterval); submitQuiz(); }
+  }, 1000);
+}
+
+/* ══════════════════════════════════════════════════════════
+   START / RESET
+══════════════════════════════════════════════════════════ */
+function startQuiz() {
+  active = shuffle(BANK);
+  answers = new Array(50).fill(null);
+  currentQ = 0;
+  secondsLeft = 25 * 60;
+
+  document.getElementById('intro-screen').style.display = 'none';
+  document.getElementById('results-screen').style.display = 'none';
+  const qs = document.getElementById('quiz-screen');
+  qs.style.display = 'flex';
+  qs.style.flexDirection = 'column';
+
+  buildGrid();
+  renderQ(0);
+  startTimer();
+}
+
+function resetQuiz() {
+  clearInterval(timerInterval);
+  document.getElementById('results-screen').style.display = 'none';
+  startQuiz();
+}
+
+/* ══════════════════════════════════════════════════════════
+   GRID
+══════════════════════════════════════════════════════════ */
+function buildGrid() {
+  const g = document.getElementById('q-grid');
+  g.innerHTML = '';
+  active.forEach((_,i) => {
+    const d = document.createElement('button');
+    d.className = 'grid-dot'; d.textContent = i+1; d.id = `dot-${i}`;
+    d.onclick = () => renderQ(i);
+    g.appendChild(d);
+  });
+  syncGrid();
+}
+
+function syncGrid() {
+  active.forEach((_,i) => {
+    const d = document.getElementById(`dot-${i}`);
+    if (!d) return;
+    d.className = 'grid-dot';
+    if (i === currentQ) d.classList.add('active');
+    if (answers[i] !== null) d.classList.add('answered');
+  });
+  const n = answers.filter(a=>a!==null).length;
+  document.getElementById('answered-count').innerHTML = `<strong>${n}</strong> de 50 respondidas`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   RENDER QUESTION
+══════════════════════════════════════════════════════════ */
+function renderQ(idx) {
+  currentQ = idx;
+  const q = active[idx];
+  const tL = {tf:'Verdadeiro/Falso',fill:'Completar',mc:'Escolha Múltipla'};
+  const tC = {tf:'badge-tf',fill:'badge-fill',mc:'badge-mc'};
+  const dL = {facil:'Fácil',medio:'Médio',dificil:'Difícil'};
+  const dC = {facil:'diff-facil',medio:'diff-medio',dificil:'diff-dificil'};
+  const cur = answers[idx];
+
+  let body = '';
+  if (q.type === 'tf') {
+    body = `<div class="tf-options">
+      <button class="tf-btn ${cur==='V'?'selected-v':''}" onclick="pickTF('V')">✓ Verdadeiro</button>
+      <button class="tf-btn ${cur==='F'?'selected-f':''}" onclick="pickTF('F')">✗ Falso</button>
+      <button class="tf-btn ${cur==='NS'?'selected-ns':''}" onclick="pickTF('NS')">? Não sei</button>
+    </div>
+    <div class="tf-note">⚠ "Não sei" = 0 pontos · Errar = −1 · Justificações disponíveis no resultado</div>`;
+  } else if (q.type === 'fill') {
+    const safe = (cur||'').replace(/"/g,'&quot;');
+    body = `<div class="fill-wrap">
+      <div class="fill-label">Escreve a tua resposta:</div>
+      <input class="fill-input" id="fi" type="text" placeholder="…" value="${safe}"
+        oninput="pickFill(this.value)" onkeydown="if(event.key==='Enter')nextQ()">
+    </div>`;
+  } else {
+    body = `<div class="mc-options">${['a','b','c','d'].map(l=>`
+      <button class="mc-option ${cur===l?'selected':''}" onclick="pickMC('${l}')">
+        <div class="option-letter">${l.toUpperCase()}</div>
+        <div class="option-text">${q.options[l]}</div>
+      </button>`).join('')}</div>`;
+  }
+
+  document.getElementById('question-card').innerHTML = `
+    <div class="q-meta">
+      <span class="q-num">Pergunta ${idx+1} de 50</span>
+      <span class="q-type-badge ${tC[q.type]}">${tL[q.type]}</span>
+      <span class="q-diff-badge ${dC[q.difficulty]}">${dL[q.difficulty]}</span>
+    </div>
+    <div class="q-text">${q.question}</div>
+    ${body}
+    <div class="q-nav">
+      <button class="btn-nav" onclick="prevQ()" ${idx===0?'disabled':''}>← Anterior</button>
+      <span style="font-size:.75rem;color:var(--cream-dim)">${idx+1} / 50</span>
+      ${idx<49
+        ? `<button class="btn-nav" onclick="nextQ()">Próxima →</button>`
+        : `<button class="btn-submit" onclick="confirmSubmit()">Entregar ✓</button>`}
+    </div>`;
+
+  document.getElementById('progress-fill').style.width = ((idx+1)/50*100)+'%';
+  document.getElementById('q-counter').textContent = `${idx+1} / 50`;
+  syncGrid();
+}
+
+/* ══════════════════════════════════════════════════════════
+   ANSWER RECORDING
+══════════════════════════════════════════════════════════ */
+function pickTF(v)   { answers[currentQ]=v; renderQ(currentQ); }
+function pickFill(v) { answers[currentQ]=v.trim()===''?null:v.trim(); syncGrid(); }
+function pickMC(l)   { answers[currentQ]=l; renderQ(currentQ); }
+function prevQ()     { if(currentQ>0)  renderQ(currentQ-1); }
+function nextQ()     { if(currentQ<49) renderQ(currentQ+1); }
+
+/* ══════════════════════════════════════════════════════════
+   SUBMIT
+══════════════════════════════════════════════════════════ */
+function confirmSubmit() {
+  const u = answers.filter(a=>a===null).length;
+  document.getElementById('modal-msg').textContent = u>0
+    ? `Tens ${u} pergunta(s) por responder (valem 0 pontos). Confirmas a entrega?`
+    : 'Respondeste a todas as perguntas. Confirmas a entrega da prova?';
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal()  { document.getElementById('modal').classList.remove('show'); }
+function submitQuiz()  { clearInterval(timerInterval); closeModal(); showResults(); }
+
+/* ══════════════════════════════════════════════════════════
+   SCORING
+══════════════════════════════════════════════════════════ */
+function score() {
+  let correct=0, wrong=0, skip=0, pts=0;
+  const detail = active.map((q,i) => {
+    const ua = answers[i];
+    let res;
+    if (ua===null || ua==='') { res='skip'; skip++; }
+    else if (q.type==='tf') {
+      if (ua==='NS')          { res='skip'; skip++; }
+      else if (ua===q.answer) { res='correct'; correct++; pts+=2; }
+      else                    { res='wrong';   wrong++;   pts-=1; }
+    } else if (q.type==='fill') {
+      const norm = ua.toLowerCase().trim();
+      if (q.answer.map(a=>a.toLowerCase()).includes(norm)) { res='correct'; correct++; pts+=2; }
+      else                                                  { res='wrong';   wrong++;   pts-=1; }
+    } else {
+      if (ua===q.answer) { res='correct'; correct++; pts+=2; }
+      else               { res='wrong';   wrong++;   pts-=1; }
+    }
+    return {q, ua, res};
+  });
+  return {pts, correct, wrong, skip, detail};
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOPIC ANALYSIS
+══════════════════════════════════════════════════════════ */
+function analyzeTopics(detail) {
+  const map = {};
+  detail.forEach(({q,res}) => {
+    if (!map[q.topic]) map[q.topic] = {correct:0,wrong:0,skip:0,total:0};
+    map[q.topic].total++;
+    map[q.topic][res]++;
+  });
+  return Object.entries(map).map(([name,s]) => {
+    const answered = s.correct+s.wrong;
+    const pct = s.total>0 ? Math.round(s.correct/s.total*100) : 0;
+    return {name,...s,pct,errorRate:answered>0?s.wrong/answered:0};
+  }).sort((a,b)=>b.errorRate-a.errorRate||b.wrong-a.wrong);
+}
+
+/* ══════════════════════════════════════════════════════════
+   SHOW RESULTS
+══════════════════════════════════════════════════════════ */
+function showResults() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('results-screen').style.display = 'flex';
+
+  const {pts,correct,wrong,skip,detail} = score();
+  const raw = Math.max(0,pts);
+  const val = (raw/100*8).toFixed(2);
+  const C   = 2*Math.PI*44;
+
+  // Rings
+  document.getElementById('score-rings').innerHTML = `
+    <div class="score-ring">
+      <svg width="120" height="120" viewBox="0 0 100 100" class="ring-svg">
+        <circle class="ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="ring-fill" cx="50" cy="50" r="44"
+          stroke="${raw>=50?'#c8a84b':'#d95f5f'}"
+          stroke-dasharray="${C}" stroke-dashoffset="${C-C*(raw/100)}"/>
+      </svg>
+      <div class="ring-label">${raw}<span style="font-size:1rem;color:var(--cream-dim)">/100</span></div>
+      <div class="ring-sub">Pontuação</div>
+    </div>
+    <div class="score-ring">
+      <svg width="120" height="120" viewBox="0 0 100 100" class="ring-svg">
+        <circle class="ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="ring-fill" cx="50" cy="50" r="44"
+          stroke="#c8a84b"
+          stroke-dasharray="${C}" stroke-dashoffset="${C-C*(parseFloat(val)/8)}"/>
+      </svg>
+      <div class="ring-label">${val}<span style="font-size:1rem;color:var(--cream-dim)">/8</span></div>
+      <div class="ring-sub">40% de 20 val.</div>
+    </div>`;
+
+  // Stats
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-cell"><div class="n n-correct">${correct}</div><div class="t">Certas (+${correct*2}pt)</div></div>
+    <div class="stat-cell"><div class="n n-wrong">${wrong}</div><div class="t">Erradas (−${wrong}pt)</div></div>
+    <div class="stat-cell"><div class="n" style="color:var(--cream-dim)">${skip}</div><div class="t">Sem resposta</div></div>
+    <div class="stat-cell"><div class="n" style="color:var(--gold)">${pts}</div><div class="t">Pontos brutos</div></div>`;
+
+  document.getElementById('final-note').innerHTML = `
+    <span class="big-score">${val} valores</span>
+    em 8 possíveis (40% da nota final de 20)<br>
+    <span style="font-size:.75rem">${correct} certas × +2 &nbsp;·&nbsp; ${wrong} erradas × −1 &nbsp;·&nbsp; ${skip} sem resposta × 0</span>`;
+
+  // Topic recommendations
+  const topics = analyzeTopics(detail);
+  const weak   = topics.filter(t=>t.wrong>0||t.skip>t.correct);
+  let tHTML = `<div class="section-title orange">📚 Tópicos a rever</div>`;
+  if (weak.length===0) {
+    tHTML += `<div class="no-weak">✓ Excelente! Não há tópicos com erros expressivos. Mantém a revisão geral.</div>`;
+  } else {
+    weak.slice(0,6).forEach(t => {
+      const bar = t.pct>=70?'var(--green)':t.pct>=40?'var(--orange)':'var(--red)';
+      const priority = t.wrong>=2?'🔴 Prioridade alta — reler com atenção':t.wrong===1?'🟡 Rever — um erro registado':'⚪ Atenção — muitas perguntas sem resposta';
+      tHTML += `<div class="topic-card">
+        <div class="topic-name">${t.name}</div>
+        <div class="topic-detail">${priority} &nbsp;·&nbsp; ${t.correct} certas · ${t.wrong} erradas · ${t.skip} sem resposta (de ${t.total})</div>
+        <div class="topic-bar-wrap"><div class="topic-bar" style="width:${t.pct}%;background:${bar}"></div></div>
+      </div>`;
+    });
+    if (weak.length>6) tHTML += `<div style="font-size:.75rem;color:var(--cream-dim);text-align:center;margin-top:.5rem">+ ${weak.length-6} tópico(s) adicionais com margem de melhoria</div>`;
+  }
+  document.getElementById('topics-section').innerHTML = tHTML;
+
+  // Breakdown
+  const aL = (q,ua) => {
+    if (ua===null) return '—';
+    if (q.type==='tf') return ua==='NS'?'Não sei':ua==='V'?'Verdadeiro':'Falso';
+    if (q.type==='fill') return `"${ua}"`;
+    return `${ua.toUpperCase()}) ${q.options[ua]}`;
+  };
+  const cL = q => {
+    if (q.type==='tf')   return q.answer==='V'?'Verdadeiro':'Falso';
+    if (q.type==='fill') return `"${q.answer[0]}"`;
+    return `${q.answer.toUpperCase()}) ${q.options[q.answer]}`;
+  };
+
+  let bHTML = '';
+  detail.forEach(({q,ua,res},i) => {
+    const ptsVal  = res==='correct'?'+2':res==='wrong'?'−1':'0';
+    const ptsCls  = res==='correct'?'pts-pos':res==='wrong'?'pts-neg':'pts-zero';
+    const icon    = res==='correct'?'✓':res==='wrong'?'✗':'○';
+
+    let ansDetail = '';
+    if (res==='correct') {
+      ansDetail = `<span class="user-ans-correct">✓ ${aL(q,ua)}</span>`;
+    } else if (res==='wrong') {
+      ansDetail = `<span class="user-ans-wrong">✗ A tua: ${aL(q,ua)}</span><br><span class="correct-ans-show">✓ Certa: ${cL(q)}</span>`;
+    } else {
+      ansDetail = `<span class="skip-label">${ua==='NS'?'? Não sei':'Não respondida'}</span>`;
+      if (ua!=='NS') ansDetail += `<br><span class="correct-ans-show">✓ Certa: ${cL(q)}</span>`;
+    }
+
+    const justHTML = (q.type==='tf'&&q.justification)
+      ? `<div class="tf-just"><span class="icon">ℹ</span><span>${q.justification}</span></div>` : '';
+
+    bHTML += `<div class="breakdown-item res-${res}">
+      <div class="bi-top">
+        <div class="bi-num">${icon} ${i+1}</div>
+        <div class="bi-q">
+          <strong>${q.question.length>100?q.question.substring(0,98)+'…':q.question}</strong>
+          ${ansDetail}
+        </div>
+        <div class="bi-result"><div class="pts ${ptsCls}">${ptsVal} pt</div></div>
+      </div>
+      ${justHTML}
+    </div>`;
+  });
+  document.getElementById('breakdown-list').innerHTML = bHTML;
+}
+</script>
+</body>
+</html>
